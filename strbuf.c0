@@ -1,0 +1,124 @@
+/* 
+ * String Buffer Library
+ *
+ * 15-122 Principles of Imperative Computation
+ * This version exposes the externals, requires
+ * discipline from client! */
+
+/*** Interface ***/
+#use <conio>
+
+struct strbuf {
+  int limit;
+  int len;
+  char[] buf;
+};
+bool is_strbuf(struct strbuf* sb);
+
+struct strbuf* strbuf_new(int init_limit);
+char[] strbuf_str(struct strbuf* sb);
+void strbuf_add(struct strbuf* sb, char[] str, int len);
+void strbuf_addstr(struct strbuf* sb, char[] str);
+
+
+/*** Implementation ***/
+bool is_expected_length(char[] c, int len)
+{
+  //@assert \length(c) == len;
+  return true;
+}
+bool is_strbuf(struct strbuf* sb)
+{
+  if (sb==NULL) return false;
+  if (sb->len >= sb->limit) return false;
+  if (sb->limit <1) return false;
+  if (sb->len < 0) return false;
+  if (!is_cstring(sb->buf,0,sb->len+1)) return false;
+  if (!is_expected_length(sb->buf, sb->limit)) return false;
+  if (strlen(sb->buf,0) != sb->len) return false;
+  for(int i=0; i<sb->len; i++){
+    //assert i <= sb->len;
+    if(sb->buf[i] == '\0') return false;
+  }  
+  if(sb->buf[sb->len] != '\0') return false;
+  return true;
+}
+
+struct strbuf* strbuf_new(int init_limit)
+//@requires init_limit > 0;
+//@ensures is_strbuf(\result);
+//@ensures \result->len == 0;
+//@ensures \length(\result->buf)==init_limit;
+//@ensures \result->buf[0] == '\0';
+//@ensures \result->limit == init_limit;
+{
+  struct strbuf* r = alloc(struct strbuf);
+  r->limit = init_limit;
+  r->len = 0;
+  r->buf = alloc_array(char,init_limit);
+  r->buf[0]='\0';
+  return r;
+}
+
+char[] strbuf_str(struct strbuf* sb)
+//@requires is_strbuf(sb);
+//@ensures strlen(\result,0)==sb->len;
+//@ensures strlen(\result,0) < sb->limit;
+/*@ensures string_compare(string_from_chararray(sb->buf),
+                          string_from_chararray(\result))==0;@*/
+{
+  char[] c = alloc_array(char,sb->len+1);
+  c = strcpy(c, 0, sb->buf,0);
+//  c[i]= '\0';
+  return c;
+}
+
+void strbuf_add(struct strbuf* sb, char[] str, int str_len)
+//@requires is_strbuf(sb);
+//@requires str_len >=0;
+//@requires strlen(str,0)==str_len;
+//@ensures is_strbuf(sb);
+//@ensures strcmp(sb->buf, sb->len-str_len, str, 0)==0;
+{
+  int ini_len = sb->len;
+  if(ini_len + str_len < sb->limit){
+    for(int i =0; i < str_len;i++){
+      //assert i <= str_len;
+      sb->buf[i+ini_len] = str[i];
+      sb->len++;
+/*
+      print("XXXXX\n");
+      printchar(str[i]);
+      print("\n");
+*/
+    }
+    sb->buf[sb->len]='\0';
+  }
+  else{
+    sb->limit = 2*(ini_len + str_len);
+    
+    
+    char[] c = alloc_array(char, sb->limit);
+    for(int i =0; i < ini_len;i++){
+      //asssert i <= ini_len;
+      c[i] = sb->buf[i];
+    }
+
+    for(int j=0; j < str_len; j++){
+      //assert j <=str_len;
+      c[j+ini_len]=str[j];
+      sb->len++; 
+    }
+    c[sb->len]='\0';
+    sb->buf = c;
+  }
+}
+
+void strbuf_addstr(struct strbuf* sb, char[] str)
+//@requires is_strbuf(sb);
+//@requires strlen(str,0) >= 0;
+//@ensures is_strbuf(sb);
+//@ensures strcmp(sb->buf, sb->len-strlen(str,0), str, 0)==0;
+{
+  strbuf_add(sb, str, strlen(str, 0));
+}

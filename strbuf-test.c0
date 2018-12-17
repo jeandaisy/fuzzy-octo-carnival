@@ -1,0 +1,203 @@
+/* 
+ * Testing the strbuf implementation. 
+ * 
+ * Note that this is just for testing! This code allows the user's
+ * input to attempt removing things an empty buffer, adding things to
+ * a full buffer, and moving left or right off the end of an array.
+ * These should lead to a @requires violation.
+ *
+ * cc0 -d -w -x gapbuf.c0 gapbuf-test.c0
+ * 
+ * 15-122 Principles of Imperative Computation */
+
+
+#use <conio>
+
+#use <string>
+
+
+void test() 
+{
+
+  struct strbuf* case_1 = alloc(struct strbuf);
+  case_1->limit = 3;
+  case_1->len = 4;
+  char[] c = alloc_array(char,3);
+  case_1->buf = c;
+
+  assert(is_strbuf(case_1)==false);
+
+  println("---CASE 1 DONE----");
+
+  int size = 13;
+  struct strbuf* case_2 = strbuf_new(size);
+
+  assert(is_strbuf(case_2));
+  assert(case_2->len==0);
+  assert(case_2->limit==size);
+  assert(case_2->limit > 0);
+  assert(case_2->buf[0]=='\0');
+  assert(strlen(strbuf_str(case_2),0) == 0);
+  assert(string_compare(string_from_chararray(strbuf_str(case_2)),"")==0);
+
+  println("---CASE 2 DONE----");
+
+  strbuf_add(case_2, string_to_chararray("over"),4);
+
+  assert(is_strbuf(case_2));
+  assert(strbuf_str(case_2)[0]=='o');
+  assert(strbuf_str(case_2)[1]=='v');
+  assert(strbuf_str(case_2)[4]=='\0');
+  assert(string_compare(string_from_chararray(strbuf_str(case_2)),"over")==0);
+  assert(case_2->len == 4);
+  assert(case_2->limit ==size);
+  assert(string_compare(string_from_chararray(case_2->buf),"over")==0);
+
+  println("---CASE 3 DONE----");
+
+  strbuf_addstr(case_2, string_to_chararray("loading"));
+
+  assert(is_strbuf(case_2));
+  assert(case_2->len == 11);
+  assert(case_2->limit ==size);
+  assert(string_compare(string_from_chararray(case_2->buf),"overloading")==0);
+
+  println("---WILL DO RESIZE----");
+  strbuf_addstr(case_2, string_to_chararray("again"));
+
+  assert(case_2->len == 16);
+  assert(case_2->limit > size);
+  int limit_1 = case_2->limit;
+  assert(string_compare(string_from_chararray(case_2->buf),
+                        "overloadingagain")==0);
+
+  println("---CASE 4 DONE----");
+
+  case_2->buf[18]='h';
+  case_2->buf[19]='a';
+
+  strbuf_addstr(case_2, string_to_chararray("mm"));
+  assert(is_strbuf(case_2));
+  int limit_2 = case_2->limit;
+  assert(case_2->len == 18);
+  assert(limit_1==limit_2);
+  assert(string_compare(string_from_chararray(case_2->buf),
+                        "overloadingagainmm")==0);
+
+  strbuf_addstr(case_2, string_to_chararray(""));
+  assert(is_strbuf(case_2));
+  int limit_3 = case_2->limit;
+  assert(case_2->len == 18);
+  assert(limit_2==limit_3);
+  assert(string_compare(string_from_chararray(case_2->buf),
+                        "overloadingagainmm")==0);
+
+  struct strbuf* case_3 = strbuf_new(size);
+
+  case_3->len = 8;
+  case_3->buf[0]='h';
+  case_3->buf[1]='i';
+  case_3->buf[2]=' ';
+  case_3->buf[3]='w';
+  case_3->buf[4]='o';
+  case_3->buf[5]='r';
+  case_3->buf[6]='l';
+  case_3->buf[7]='d';
+  case_3->buf[8]='\0';
+  case_3->buf[9]='B';
+  case_3->buf[10]='y';
+  case_3->buf[11]='e';
+  case_3->buf[12]='\0';
+
+
+
+  assert(is_strbuf(case_3));
+
+  char[] c3 = strbuf_str(case_3);
+  assert(string_compare(string_from_chararray(c3),"hi world")==0);
+  assert(case_3->len == 8);
+
+  strbuf_addstr(case_2, case_3->buf);
+
+  assert(is_strbuf(case_2));
+
+  print("case 3+ case 2 00000000000\n");
+  printint(case_2->len);
+  flush();
+  assert(case_2->len == 26);
+  assert(case_2->len < case_2->limit);
+  assert(string_compare(string_from_chararray(case_2->buf),
+                        "overloadingagainmmhi world")==0);
+
+
+  strbuf_addstr(case_3, string_to_chararray("mm"));
+  assert(is_strbuf(case_3));
+  assert(case_3->len == 10);
+
+ 
+  assert(string_compare(string_from_chararray(strbuf_str(case_3)),
+                        "hi worldmm")==0);
+
+  println("---CASE 5 DONE----");
+
+  struct strbuf* case_6 = alloc(struct strbuf);
+  case_6->limit = 1;
+  case_6->len = 0;
+  char[] c_6 = alloc_array(char,1);
+  c_6[0] = '\0';
+  case_6->buf = c_6;
+
+
+  assert(case_6->buf[0] == '\0');
+  assert(is_strbuf(case_6)==true);
+
+  println("---CASE 6 DONE----");
+
+  struct strbuf* case_7 = alloc(struct strbuf);
+  case_7->limit = -1;
+  case_7->len = 0;
+  char[] c_7 = alloc_array(char,1);
+  c_7[0] = '\0';
+  case_7->buf = c_7;
+
+
+
+  assert(is_strbuf(case_7)==false);
+
+  println("---CASE 7 DONE----");  
+
+  struct strbuf* case_8 = alloc(struct strbuf);
+  case_8->limit = -1;
+  case_8->len = -9;
+  char[] c_8 = alloc_array(char,10);
+  c_8[0] = '\0';
+  case_8->buf = c_8;
+
+  assert(is_strbuf(case_8)==false);
+
+  println("---CASE 8 DONE----"); 
+
+  struct strbuf* case_9 = alloc(struct strbuf);
+  case_9->limit = 10;
+  case_9->len = 9;
+  char[] c_9 = alloc_array(char,10);
+  case_9->buf = c_9;
+
+  assert(is_strbuf(case_9)==false);
+
+  println("---CASE 9 DONE----"); 
+
+  int size_10 = 1;
+  struct strbuf* case_10 = strbuf_new(size_10);
+  
+  assert(is_strbuf(case_10));
+  char[] c10 = strbuf_str(case_10);
+  assert(c10[0] == '\0');
+  assert(strlen(c10, 0)==0);
+}
+
+int main() {
+  test();
+  println("Goodbye.");
+  return 0;
+}  
